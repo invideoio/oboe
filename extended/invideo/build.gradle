@@ -1,0 +1,71 @@
+plugins {
+    id 'com.android.library'
+    id 'kotlin-android'
+    id 'maven-publish'
+}
+
+android {
+    compileSdkVersion 31
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 31
+        versionCode 1
+        versionName '1.0'
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++17"
+                arguments '-DANDROID_STL=c++_static'
+                // armeabi and mips are deprecated in NDK r16 so we don't want to build for them
+                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+            }
+        }
+    }
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'),
+                          'proguard-rules.pro'
+        }
+    }
+    externalNativeBuild {
+        cmake {
+            path 'src/main/cpp/CMakeLists.txt'
+        }
+    }
+}
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId = 'com.google.oboe.extended'
+            artifactId = 'invideo'
+            version = '1.0'
+
+            afterEvaluate {
+                from components.release
+            }
+        }
+    }
+    repositories {
+        maven {
+            url "https://maven.pkg.jetbrains.space/invideo/p/mobile/oboe-extended"
+
+            def spaceUsername = project.project.findProperty("space.username")
+            def spacePassword = project.project.findProperty("space.password")
+            credentials {
+                username = spaceUsername
+                password = spacePassword
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+}
